@@ -447,6 +447,39 @@ namespace quest
 		lua_settop(L, x);
 	}
 
+	// Quests only need os.time / os.date. The full `os` and `io` libraries let any quest run
+	// shell commands (os.execute) or read and write files, so only a safe subset of `os` is exposed.
+	static void OpenRestrictedOsLibrary(lua_State* L)
+	{
+		const int top = lua_gettop(L);
+
+		luaopen_io(L); // registers the global tables `os` and `io`
+
+		lua_newtable(L);
+		const int restrictedOs = lua_gettop(L);
+		lua_pushstring(L, "os");
+		lua_gettable(L, LUA_GLOBALSINDEX);
+		const int fullOs = lua_gettop(L);
+
+		for (const char* functionName : { "clock", "date", "difftime", "time" })
+		{
+			lua_pushstring(L, functionName);
+			lua_pushstring(L, functionName);
+			lua_gettable(L, fullOs);
+			lua_settable(L, restrictedOs);
+		}
+
+		lua_pushstring(L, "os");
+		lua_pushvalue(L, restrictedOs);
+		lua_settable(L, LUA_GLOBALSINDEX);
+
+		lua_pushstring(L, "io");
+		lua_pushnil(L);
+		lua_settable(L, LUA_GLOBALSINDEX);
+
+		lua_settop(L, top);
+	}
+
 	/**
 	 * @version 05/06/08	Bang2ni - __get_guildid_byname 스크립트 함수 등록
 	 */
@@ -458,9 +491,7 @@ namespace quest
 		luaopen_table(L);
 		luaopen_string(L);
 		luaopen_math(L);
-		//TEMP
-		luaopen_io(L);
-		luaopen_debug(L);
+		OpenRestrictedOsLibrary(L);
 
 		RegisterAffectFunctionTable();
 		RegisterBuildingFunctionTable();
