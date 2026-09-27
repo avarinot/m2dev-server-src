@@ -70,6 +70,7 @@ void thecore_shutdown()
 int thecore_idle(void)
 {
     thecore_tick();
+    signal_poll_shutdown();
 
     if (shutdowned.load())
 		return 0;
