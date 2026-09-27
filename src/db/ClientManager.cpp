@@ -121,7 +121,7 @@ bool CClientManager::Initialize()
 		// strlcpy(szBindIP, "0", sizeof(szBindIP));
 		strlcpy(szBindIP, "127.0.0.1", sizeof(szBindIP)); // Fix: Now even if the DB port is publicly available an attacker can't connect to it with a fake auth.
 
-	m_fdAccept = socket_tcp_bind(szBindIP, tmpValue);
+	m_fdAccept = socket_tcp_bind_address(szBindIP, tmpValue);
 
 	if (m_fdAccept < 0)
 	{

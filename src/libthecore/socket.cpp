@@ -127,7 +127,9 @@ int socket_write(socket_t desc, const char *data, size_t length)
     return 0;
 }
 
-int socket_bind(const char * ip, int port, int protocol)
+// bUseAddress: bind on `ip` on every platform. Otherwise the legacy behaviour applies:
+// only FreeBSD honours `ip`, other platforms bind on all interfaces (INADDR_ANY).
+static int socket_bind(const char * ip, int port, int protocol, bool bUseAddress)
 {
     int                 s;
 #ifdef __WIN32
@@ -160,8 +162,14 @@ int socket_bind(const char * ip, int port, int protocol)
 #ifdef OS_FREEBSD
     sa.sin_addr.s_addr	= inet_addr(ip);
 #else
-	sa.sin_addr.s_addr	= INADDR_ANY;
-#endif 
+	sa.sin_addr.s_addr	= bUseAddress ? inet_addr(ip) : INADDR_ANY;
+#endif
+    if (sa.sin_addr.s_addr == INADDR_NONE)
+    {
+	sys_err("bind: invalid address %s", ip);
+	socket_close(s);
+	return -1;
+    }
     sa.sin_port		= htons((unsigned short) port);
 
     if (bind(s, (struct sockaddr *) &sa, sizeof(sa)) < 0)
@@ -185,7 +193,12 @@ int socket_bind(const char * ip, int port, int protocol)
 
 int socket_tcp_bind(const char * ip, int port)
 {
-    return socket_bind(ip, port, SOCK_STREAM);
+    return socket_bind(ip, port, SOCK_STREAM, false);
+}
+
+int socket_tcp_bind_address(const char * ip, int port)
+{
+    return socket_bind(ip, port, SOCK_STREAM, true);
 }
 
 void socket_close(socket_t s)

@@ -10,6 +10,7 @@ int			socket_read(socket_t desc, char* read_point, size_t space_left);
 int			socket_write(socket_t desc, const char *data, size_t length);
 
 int			socket_tcp_bind(const char * ip, int port);
+int			socket_tcp_bind_address(const char * ip, int port);
 
 socket_t	socket_accept(socket_t s, struct sockaddr_in *peer);
 void		socket_close(socket_t s);
