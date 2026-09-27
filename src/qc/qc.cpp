@@ -10,6 +10,7 @@ extern "C"
 }
 
 #include <algorithm>
+#include <charconv>
 #include <iostream>
 #include <set>
 #include <map>
@@ -153,7 +154,13 @@ ostream & operator << (ostream & ostr, const Token& tok)
 	if (tok.token == TK_NAME)
 		ostr << getstr(tok.seminfo.ts);
 	else if (tok.token == TK_NUMBER)
-		ostr << tok.seminfo.r;
+	{
+		// Shortest text that parses back to the exact same number: the default stream
+		// precision (6 digits) silently altered literals such as 1999999999 into 2e+09.
+		char szNumber[32];
+		const auto result = std::to_chars(szNumber, szNumber + sizeof(szNumber), tok.seminfo.r);
+		ostr.write(szNumber, result.ptr - szNumber);
+	}
 	else if (tok.token == TK_STRING)
 		ostr << '"' << getstr(tok.seminfo.ts) <<'"';
 	else
