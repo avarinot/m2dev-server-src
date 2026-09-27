@@ -7,6 +7,7 @@
 #include "empire_text_convert.h"
 #include "config.h"
 #include "skill_power.h"
+#include "common/localization.h"
 
 using namespace std;
 
@@ -19,6 +20,7 @@ string g_stServiceMapPath = "data/map";
 
 string g_stLocale = "euckr";
 string g_stLocaleFilename;
+static string s_stLanguage;
 
 BYTE PK_PROTECT_LEVEL = 30;
 
@@ -422,9 +424,10 @@ void LocaleService_LoadLocaleStringFile()
 	if (g_bAuthServer)
 		return;
 
-	fprintf(stderr, "LocaleService %s\n", g_stLocaleFilename.c_str());
+	const string localeFilename = LocaleService_GetLocalizedFileName(g_stLocaleFilename);
+	fprintf(stderr, "LocaleService %s\n", localeFilename.c_str());
 
-	locale_init(g_stLocaleFilename.c_str());
+	locale_init(localeFilename.c_str());
 }
 
 void LocaleService_LoadEmpireTextConvertTables()
@@ -1231,6 +1234,20 @@ const std::string& LocaleService_GetMapPath()
 const std::string& LocaleService_GetQuestPath()
 {
 	return g_stQuestDir;
+}
+
+void LocaleService_SetLanguage(const std::string& language)
+{
+	s_stLanguage = language;
+}
+
+std::string LocaleService_GetLocalizedFileName(const std::string& fileName)
+{
+	const std::string localized = GetLocalizedFileName(fileName, s_stLanguage);
+	if (!s_stLanguage.empty() && localized == fileName)
+		sys_err("LANGUAGE %s: no localized variant of %s, using it as is", s_stLanguage.c_str(), fileName.c_str());
+
+	return localized;
 }
 
 bool LC_InitLocalization( const std::string& szLocal )

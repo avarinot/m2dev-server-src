@@ -554,14 +554,13 @@ namespace quest
 
 		if (LC_IsEurope())
 		{
-			char translateFileName[256];
-			snprintf(translateFileName, sizeof(translateFileName), "%s/translate.lua", LocaleService_GetBasePath().c_str());
+			const std::string translateFileName = LocaleService_GetLocalizedFileName(LocaleService_GetBasePath() + "/translate.lua");
 
-			int translateLoadingResult = lua_dofile(L, translateFileName);
-			sys_log(0, "LoadTranslate(%s), returns %d", translateFileName, translateLoadingResult);
+			int translateLoadingResult = lua_dofile(L, translateFileName.c_str());
+			sys_log(0, "LoadTranslate(%s), returns %d", translateFileName.c_str(), translateLoadingResult);
 			if (translateLoadingResult != 0)
 			{
-				sys_err("LOAD_TRANSLATE_ERROR(%s)", translateFileName);
+				sys_err("LOAD_TRANSLATE_ERROR(%s)", translateFileName.c_str());
 				return false;
 			}
 		}

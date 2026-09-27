@@ -7,6 +7,7 @@
 
 #include "CsvReader.h"
 #include "ProtoReader.h"
+#include "common/localization.h"
 
 using namespace std;
 
@@ -195,9 +196,11 @@ bool CClientManager::InitializeMobTable()
 	bool isNameFile = true;
 	//<파일 읽기>
 	cCsvTable nameData;
-	if(!nameData.Load("conf/mob_names.txt",'\t'))
+	const std::string mobNamesFileName = GetLocalizedFileName("conf/mob_names.txt", GetLanguage());
+	sys_log(0, "Loading mob names from %s", mobNamesFileName.c_str());
+	if(!nameData.Load(mobNamesFileName.c_str(),'\t'))
 	{
-		fprintf(stderr, "conf/mob_names.txt 파일을 읽어오지 못했습니다\n");
+		fprintf(stderr, "%s 파일을 읽어오지 못했습니다\n", mobNamesFileName.c_str());
 		isNameFile = false;
 	} else {
 		nameData.Next();	//설명row 생략.
@@ -597,9 +600,11 @@ bool CClientManager::InitializeItemTable()
 	bool isNameFile = true;
 	map<int,const char*> localMap;
 	cCsvTable nameData;
-	if(!nameData.Load("conf/item_names.txt",'\t'))
+	const std::string itemNamesFileName = GetLocalizedFileName("conf/item_names.txt", GetLanguage());
+	sys_log(0, "Loading item names from %s", itemNamesFileName.c_str());
+	if(!nameData.Load(itemNamesFileName.c_str(),'\t'))
 	{
-		fprintf(stderr, "conf/item_names.txt 파일을 읽어오지 못했습니다\n");
+		fprintf(stderr, "%s 파일을 읽어오지 못했습니다\n", itemNamesFileName.c_str());
 		isNameFile = false;
 	} else {
 		nameData.Next();
