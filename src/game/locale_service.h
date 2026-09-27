@@ -8,6 +8,8 @@ void LocaleService_TransferDefaultSetting();
 const std::string& LocaleService_GetBasePath();
 const std::string& LocaleService_GetMapPath();
 const std::string& LocaleService_GetQuestPath();
+void LocaleService_SetLanguage(const std::string& language);
+std::string LocaleService_GetLocalizedFileName(const std::string& fileName);
 
 enum eLocalization
 {

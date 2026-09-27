@@ -5,5 +5,6 @@ int	Start();
 void End();
 const char * GetTablePostfix();
 const char * GetPlayerDBName();
+const std::string& GetLanguage();
 
 #endif

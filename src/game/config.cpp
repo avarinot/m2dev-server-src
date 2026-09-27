@@ -571,6 +571,12 @@ void config_init(const string& st_localeServiceName)
 			continue;
 		}
 
+		TOKEN("language")
+		{
+			LocaleService_SetLanguage(value_string);
+			continue;
+		}
+
 		TOKEN("test_server")
 		{
 			printf("-----------------------------------------------\n");

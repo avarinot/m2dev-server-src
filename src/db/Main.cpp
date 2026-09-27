@@ -20,6 +20,7 @@ std::string g_stTablePostfix;
 std::string g_stLocaleNameColumn = "name";
 std::string g_stLocale = "euckr";
 std::string g_stPlayerDBName = "";
+std::string g_stLanguage;
 
 
 bool g_bHotBackup = false;
@@ -237,6 +238,12 @@ int Start()
 		g_stLocaleNameColumn = szBuf;
 	}
 
+	if (CConfig::instance().GetValue("LANGUAGE", szBuf, 256))
+	{
+		g_stLanguage = szBuf;
+		sys_log(0, "LANGUAGE set to %s", g_stLanguage.c_str());
+	}
+
 	char szAddr[64], szDB[64], szUser[64], szPassword[64];
 	int iPort;
 	char line[256+1];
@@ -392,6 +399,11 @@ void SetTablePostfix(const char* c_pszTablePostfix)
 const char * GetTablePostfix()
 {
 	return g_stTablePostfix.c_str();
+}
+
+const std::string& GetLanguage()
+{
+	return g_stLanguage;
 }
 
 void SetPlayerDBName(const char* c_pszPlayerDBName)
