@@ -1326,7 +1326,7 @@ DWORD ClacValidComboInterval( LPCHARACTER ch, BYTE bArg )
 	{		
 		nInterval = (int)(ani_combo_speed(ch, 1 ) / ((ch->GetPoint(POINT_ATT_SPEED) / 100.f) + fAdjustNum) );
 	}
-	else if( bArg > 14 && bArg << 22 )
+	else if( bArg > 14 && bArg < 22 )
 	{
 		nInterval = (int)(ani_combo_speed(ch, bArg - 13 ) / ((ch->GetPoint(POINT_ATT_SPEED) / 100.f) + fAdjustNum) );
 	}

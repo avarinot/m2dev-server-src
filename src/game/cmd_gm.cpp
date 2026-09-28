@@ -822,13 +822,17 @@ ACMD(do_mob_ld)
 		return;
 	}
 
-	int dir = 1;
-	long x, y;
+	if (!*arg2 || !*arg3)
+	{
+		ch->ChatPacket(CHAT_TYPE_INFO, "Usage: /mob_ld <mob vnum> <x> <y> [dir]");
+		return;
+	}
 
-	if (*arg2)
-		str_to_number(x, arg2);
-	if (*arg3)
-		str_to_number(y, arg3);
+	int dir = 1;
+	long x = 0, y = 0;
+
+	str_to_number(x, arg2);
+	str_to_number(y, arg3);
 	if (*arg4)
 		str_to_number(dir, arg4);
 
@@ -4204,9 +4208,13 @@ ACMD (do_use_item)
 
 	one_argument (argument, arg1, sizeof (arg1));
 
-	int cell;
-	str_to_number(cell, arg1);
-	
+	int cell = 0;
+	if (!*arg1 || !str_to_number(cell, arg1))
+	{
+		ch->ChatPacket(CHAT_TYPE_INFO, "Usage: /use_item <inventory cell>");
+		return;
+	}
+
 	LPITEM item = ch->GetInventoryItem(cell);
 	if (item)
 	{

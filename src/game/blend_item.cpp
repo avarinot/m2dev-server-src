@@ -60,7 +60,7 @@ bool	Blend_Item_load(char *file)
 	const char	*delim = " \t\r\n";
 	char	*v;
 
-	BLEND_ITEM_INFO	*blend_item_info;
+	BLEND_ITEM_INFO	*blend_item_info = NULL;
 
 	if (0==file || 0==file[0])
 		return false;
@@ -77,6 +77,13 @@ bool	Blend_Item_load(char *file)
 
 		if (NULL==token_string)
 			continue;
+
+		if (NULL == blend_item_info && str_cmp(token_string, "section"))
+		{
+			sys_err("Blend_Item_load: '%s' before the first section", token_string);
+			fclose(fp);
+			return false;
+		}
 
 		TOKEN("section")
 		{
@@ -108,6 +115,7 @@ bool	Blend_Item_load(char *file)
 			if (0 == (blend_item_info->apply_type = FN_get_apply_type(v)))
 			{
 				sys_err ("Invalid apply_type(%s)", v);
+				fclose(fp);
 				return false;
 			}
 		}

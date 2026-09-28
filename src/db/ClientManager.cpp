@@ -2645,7 +2645,7 @@ int CClientManager::Process()
 			if (g_test_server)
 			{
 			
-				if (!(thecore_heart->pulse % thecore_heart->passes_per_sec * 10))	
+				if (!(thecore_heart->pulse % (thecore_heart->passes_per_sec * 10)))	
 					
 				{
 					if ((thecore_heart->pulse % 50) == 0) 

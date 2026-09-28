@@ -31,7 +31,7 @@ class CPlayerTableCache : public cache<TPlayerTable>
  * @brief	개인상점의 아이템 가격정보 리스트에 대한 캐시 class
  * @version	05/06/10 Bang2ni - First release.
  */
-class CItemPriceListTableCache : public cache< TItemPriceListTable >
+class CItemPriceListTableCache final : public cache< TItemPriceListTable >
 {
     public:
 

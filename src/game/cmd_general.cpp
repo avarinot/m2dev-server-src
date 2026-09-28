@@ -238,10 +238,8 @@ void Shutdown(int iSec)
 
 ACMD(do_shutdown)
 {
-	if (NULL == ch)
-	{
-		sys_err("Accept shutdown command from %s.", ch->GetName());
-	}
+	if (ch)
+		sys_log(0, "Accept shutdown command from %s.", ch->GetName());
 	TPacketGGShutdown p;
 	p.header = GG::SHUTDOWN;
 	p.length = sizeof(TPacketGGShutdown);

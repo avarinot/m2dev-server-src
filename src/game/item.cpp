@@ -1455,16 +1455,8 @@ EVENTFUNC(real_time_expire_event)
 			}								
 		}									
 	//##########################################
-		switch (item->GetVnum())
-		{
-			if(item->IsNewMountItem())
-			{
-				if (item->GetSocket(2) != 0)
-					item->ClearMountAttributeAndAffect();
-			}
-			break;
-		}
-
+		// Mount attributes and affects are cleared by RemoveItem (unequip path): a caseless switch used to hold
+		// a never-executed duplicate of it.
 		ITEM_MANAGER::instance().RemoveItem(item, "REAL_TIME_EXPIRE");
 
 		return 0;
