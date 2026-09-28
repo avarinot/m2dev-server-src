@@ -390,7 +390,7 @@ namespace quest
 
 	int party_check_item(lua_State* L)
 	{
-		if (!lua_isnumber(L, 1) || lua_isnumber(L, 2)) {
+		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
 			lua_pushboolean(L, false);
 			return 1;
 		}
@@ -422,7 +422,7 @@ namespace quest
 
 	int party_remove_item(lua_State* L)
 	{
-		if (!lua_isnumber(L, 1) || lua_isnumber(L, 2)) {
+		if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2)) {
 			lua_pushboolean(L, false);
 			return 1;
 		}
@@ -439,6 +439,17 @@ namespace quest
 		LPPARTY party = ch->GetParty();
 		if (!party) {
 			lua_pushboolean(L, ch->RemoveSpecifyItem(vnum, count));
+			return 1;
+		}
+
+		// All or nothing: check every member before removing anything, so a member lacking the items does not
+		// leave the others already charged.
+		bool hasItems = std::all_of(party->MemberBegin(), party->MemberEnd(), [vnum, count](const auto& pair) {
+			LPCHARACTER ch = pair.second.pCharacter;
+			return !ch || ch->CountSpecifyItem(vnum) >= count;
+		});
+		if (!hasItems) {
+			lua_pushboolean(L, false);
 			return 1;
 		}
 
