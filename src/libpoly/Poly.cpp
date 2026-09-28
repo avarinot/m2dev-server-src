@@ -7,13 +7,21 @@
 
 using namespace std;
 
-double _random()
+double DefaultPolyRandomSource()
 {
 #ifndef OS_WINDOWS
     return random() / (2147483648.0);
 #else
+	// NOTE: RAND_MAX is 32767 on MSVC, so this stays below 1.6e-5: number(a, b) always yields a.
 	return rand() / (2147483648.0);
 #endif
+}
+
+static PolyRandomSource s_randomSource = DefaultPolyRandomSource;
+
+void SetPolyRandomSource(PolyRandomSource source)
+{
+	s_randomSource = source ? source : DefaultPolyRandomSource;
 }
 
 int CPoly::my_irandom(double start, double end)
@@ -22,12 +30,12 @@ int CPoly::my_irandom(double start, double end)
     int is = int(start + 0.5);
     int ie = int(end - start + 0.5) + 1;
 
-    return int(_random() * ie + is);
+    return int(s_randomSource() * ie + is);
 }
 
 double CPoly::my_frandom(double start, double end)
 {
-    return _random() * (end - start) + start;
+    return s_randomSource() * (end - start) + start;
 }
 
 CPoly::CPoly()

@@ -7,6 +7,12 @@
 #include <vector>
 #include <list>
 
+// Source of the random numbers in [0, 1) behind number(), irandom() and frandom() in formulas.
+// Replaceable so tests can be deterministic; the default is the historical implementation.
+using PolyRandomSource = double (*)();
+void SetPolyRandomSource(PolyRandomSource source);
+double DefaultPolyRandomSource();
+
 class CPoly
 {
 	public:
