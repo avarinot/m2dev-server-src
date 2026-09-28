@@ -209,6 +209,10 @@ bool GetIPInfo()
 
 	for( struct ifaddrs* ifap=ifaddrp ; NULL != ifap ; ifap = ifap->ifa_next )
 	{
+		// Only IPv4 interfaces: other families (IPv6, AF_PACKET) do not hold a sockaddr_in.
+		if (!ifap->ifa_addr || ifap->ifa_addr->sa_family != AF_INET)
+			continue;
+
 		struct sockaddr_in * sai = (struct sockaddr_in *) ifap->ifa_addr;
 
 		if (!ifap->ifa_netmask ||  // ignore if no netmask
