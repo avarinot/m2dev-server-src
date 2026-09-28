@@ -153,8 +153,9 @@ void DESC_MANAGER::DestroyDesc(LPDESC d, bool bEraseFromSet)
 
 	if (d->GetHandle() != 0)
 		m_map_handle.erase(d->GetHandle());
-	else
-		m_set_pkClientDesc.erase((LPCLIENT_DESC) d);
+	else if (LPCLIENT_DESC clientDesc = dynamic_cast<LPCLIENT_DESC>(d))
+		// Handle-less descs are client descs (db connection) or P2P descs, which the old C-style cast mistyped.
+		m_set_pkClientDesc.erase(clientDesc);
 
 	// Explicit call to the virtual function Destroy()
 	d->Destroy();
