@@ -109,9 +109,13 @@ static void f_luaopen (lua_State *L, void *ud) {
   g->dummynode->next = NULL;
   g->nblocks = sizeof(lua_State) + sizeof(global_State);
   stack_init(L, L);  /* init stack */
-  /* create default meta table with a dummy table, and then close the loop */
-  defaultmeta(L)->tt = LUA_TTABLE;
-  sethvalue(defaultmeta(L), luaH_new(L, 0, 0));
+  /* create default meta table with a dummy table, and then close the loop
+     (defaultmeta stays nil until it exists: luaH_new must not read its uninitialized pointer, and
+     sethvalue sets the type tag before evaluating its value, hence the local) */
+  {
+    Table *mt = luaH_new(L, 0, 0);
+    sethvalue(defaultmeta(L), mt);
+  }
   hvalue(defaultmeta(L))->metatable = hvalue(defaultmeta(L));
   sethvalue(gt(L), luaH_new(L, 0, 4));  /* table of globals */
   sethvalue(registry(L), luaH_new(L, 4, 4));  /* registry */

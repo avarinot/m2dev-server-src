@@ -334,7 +334,8 @@ static void rehash (lua_State *L, Table *t) {
 Table *luaH_new (lua_State *L, int narray, int lnhash) {
   Table *t = luaM_new(L, Table);
   luaC_link(L, valtogco(t), LUA_TTABLE);
-  t->metatable = hvalue(defaultmeta(L));
+  /* NULL only for the default metatable itself, which f_luaopen then makes its own metatable */
+  t->metatable = ttistable(defaultmeta(L)) ? hvalue(defaultmeta(L)) : NULL;
   t->flags = cast(lu_byte, ~0);
   /* temporary values (kept only if some malloc fails) */
   t->array = NULL;
