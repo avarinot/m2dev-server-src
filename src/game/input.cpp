@@ -126,6 +126,22 @@ bool CInputProcessor::Process(LPDESC lpDesc, const void * c_pvOrig, int iBytes, 
 			return true;
 		}
 
+		// Handlers read at least the registered struct: a shorter packet would make them read past its end,
+		// possibly past the received bytes.
+		if (iPacketLen < iRegisteredSize)
+		{
+			LPCHARACTER ch = lpDesc->GetCharacter();
+			sys_err("SHORT PACKET: header 0x%04X (%s) length %d < registered size %d, recv_seq %u, CHAR: %s, PHASE: %d, fd: %d host: %s",
+				wHeader, c_pszName, iPacketLen, iRegisteredSize,
+				lpDesc->GetRecvPacketSeq(),
+				ch ? ch->GetName() : "<none>",
+				lpDesc->GetPhase(), lpDesc->GetSocket(), lpDesc->GetHostName()
+			);
+			lpDesc->DumpRecentPackets();
+			lpDesc->SetPhase(PHASE_CLOSE);
+			return true;
+		}
+
 		// Log this packet in the sequence tracker
 		lpDesc->LogRecvPacket(wHeader, static_cast<uint16_t>(iPacketLen));
 

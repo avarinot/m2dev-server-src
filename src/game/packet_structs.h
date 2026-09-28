@@ -1849,12 +1849,11 @@ typedef struct SPacketGCDragonSoulRefine
 	TItemPos Pos;
 } TPacketGCDragonSoulRefine;
 
+// Header only: the client's channel status check sends no payload (the old key/index fields were never sent nor read).
 typedef struct SPacketCGStateCheck
 {
 	uint16_t	header;
 	uint16_t	length;
-	uint32_t key;	
-	uint32_t index;
 } TPacketCGStateCheck;
 
 typedef struct SPacketGCStateCheck
