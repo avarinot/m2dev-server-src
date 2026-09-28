@@ -311,6 +311,13 @@ static int fdwatch_get_fdidx(LPFDWATCH fdw, socket_t fd) {
 
 void fdwatch_add_fd(LPFDWATCH fdw, socket_t fd, void* client_data, int rw, int oneshot)
 {
+#ifndef OS_WINDOWS
+	// On POSIX, FD_SET on a descriptor >= FD_SETSIZE is undefined behaviour (Winsock sets hold socket handles).
+	if (fd >= FD_SETSIZE) {
+		sys_err("fdwatch: descriptor %d exceeds FD_SETSIZE (%d), not watched", (int)fd, FD_SETSIZE);
+		return;
+	}
+#endif
 	int idx = fdwatch_get_fdidx(fdw, fd);
 	if (idx < 0) {
 		if (fdw->nselect_fds >= fdw->nfiles) {
@@ -359,16 +366,24 @@ int fdwatch(LPFDWATCH fdw, struct timeval *timeout)
     fdw->working_rfd_set = fdw->rfd_set;
     fdw->working_wfd_set = fdw->wfd_set;
 
+    // Winsock ignores the first argument of select(); POSIX needs the highest watched descriptor + 1,
+    // otherwise no descriptor is watched at all.
+    int nfds = 0;
+#ifndef OS_WINDOWS
+    for (i = 0; i < fdw->nselect_fds; ++i)
+	nfds = MAX(nfds, (int)fdw->select_fds[i] + 1);
+#endif
+
     if (!timeout)
     {
 	tv.tv_sec = 0;
 	tv.tv_usec = 0;
-	r = select(0, &fdw->working_rfd_set, &fdw->working_wfd_set, (fd_set*) 0, &tv);
+	r = select(nfds, &fdw->working_rfd_set, &fdw->working_wfd_set, (fd_set*) 0, &tv);
     }
     else
     {
 	tv = *timeout;
-	r = select(0, &fdw->working_rfd_set, &fdw->working_wfd_set, (fd_set*) 0, &tv);
+	r = select(nfds, &fdw->working_rfd_set, &fdw->working_wfd_set, (fd_set*) 0, &tv);
     }
 
     if (r == -1)
