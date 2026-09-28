@@ -364,7 +364,9 @@ int number_ex(int from, int to, const char *file, int line)
 
 	std::uniform_int_distribution<> distrib(from, to);
 
-	if ((to - from + 1) != 0)
+	// Unsigned arithmetic: the range size wraps to 0 only for the full int range, as before, but without the
+	// signed overflow (undefined behaviour) that to = INT_MAX used to trigger.
+	if ((static_cast<unsigned int>(to) - static_cast<unsigned int>(from) + 1u) != 0)
 		returnValue = distrib(gen);
 	else
 		sys_err("number(): devided by 0");
