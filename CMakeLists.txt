@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ASan support
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (GCC/Clang)" OFF)
 
 set(CMAKE_MODULE_PATH
 	${CMAKE_MODULE_PATH}
@@ -84,6 +85,16 @@ if(ENABLE_ASAN)
 		add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
 		add_link_options(-fsanitize=address)
 	endif()
+endif()
+
+if(ENABLE_UBSAN)
+	if(MSVC)
+		message(FATAL_ERROR "ENABLE_UBSAN is not supported by MSVC")
+	endif()
+	# Alignment checks are off: packets and protos are #pragma pack(1) structs and LZO reads unaligned words
+	# by design; x86-64 and ARM64 handle these loads, and the reports would drown every other finding.
+	add_compile_options(-fsanitize=undefined -fno-sanitize=alignment -fno-omit-frame-pointer)
+	add_link_options(-fsanitize=undefined -fno-sanitize=alignment)
 endif()
 
 add_definitions(-DNOMINMAX)
