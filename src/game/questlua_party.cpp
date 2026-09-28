@@ -446,7 +446,7 @@ namespace quest
 		// leave the others already charged.
 		bool hasItems = std::all_of(party->MemberBegin(), party->MemberEnd(), [vnum, count](const auto& pair) {
 			LPCHARACTER ch = pair.second.pCharacter;
-			return !ch || ch->CountSpecifyItem(vnum) >= count;
+			return !ch || static_cast<uint32_t>(ch->CountSpecifyItem(vnum)) >= count;
 		});
 		if (!hasItems) {
 			lua_pushboolean(L, false);
