@@ -1,3 +1,9 @@
+# Directory scope: applies to the server sources only, not to the vendored libraries.
+if(ENABLE_WARNINGS AND NOT MSVC)
+	# Unused parameters are everywhere in the handler/callback signatures and never point at a bug.
+	add_compile_options(-Wall -Wextra -Wno-unused-parameter)
+endif()
+
 add_subdirectory(common)
 add_subdirectory(libgame)
 add_subdirectory(libpoly)

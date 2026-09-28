@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ASan support
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer (GCC/Clang)" OFF)
+option(ENABLE_WARNINGS "Enable -Wall -Wextra on the server sources, not the vendored libraries (GCC/Clang)" OFF)
 
 set(CMAKE_MODULE_PATH
 	${CMAKE_MODULE_PATH}
