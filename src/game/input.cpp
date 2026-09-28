@@ -238,13 +238,15 @@ ACMD(do_block_chat);
 
 int CInputHandshake::HandleText(LPDESC d, const char * c_pData)
 {
+	// The command is not NUL-terminated: search the newline within the packet only, not past the received bytes.
+	const size_t textLength = *reinterpret_cast<const uint16_t*>(c_pData + 2) - PACKET_HEADER_SIZE;
 	c_pData += PACKET_HEADER_SIZE; // skip [header:2][length:2]
 	const char * c_pSep;
 
-	if (!(c_pSep = strchr(c_pData, '\n')))	// \n을 찾는다.
+	if (!(c_pSep = static_cast<const char *>(memchr(c_pData, '\n', textLength))))
 		return -1;
 
-	if (*(c_pSep - 1) == '\r')
+	if (c_pSep > c_pData && *(c_pSep - 1) == '\r')
 		--c_pSep;
 
 	std::string stResult;
