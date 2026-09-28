@@ -337,53 +337,44 @@ void CHARACTER::SetItem(TItemPos Cell, LPITEM pItem)
 	// 용혼석 인벤토리
 	case DRAGON_SOUL_INVENTORY:
 		{
+			// Unlike the inventory grid, the dragon soul arrays have no extra slots past the last cell.
+			if (wCell >= DRAGON_SOUL_INVENTORY_MAX_NUM)
+			{
+				sys_err("CHARACTER::SetItem: invalid DS item cell %d", wCell);
+				return;
+			}
+
 			LPITEM pOld = m_pointsInstant.pDSItems[wCell];
 
 			if (pOld)
 			{
-				if (wCell < DRAGON_SOUL_INVENTORY_MAX_NUM)
+				for (int i = 0; i < pOld->GetSize(); ++i)
 				{
-					for (int i = 0; i < pOld->GetSize(); ++i)
-					{
-						int p = wCell + (i * DRAGON_SOUL_BOX_COLUMN_NUM);
+					int p = wCell + (i * DRAGON_SOUL_BOX_COLUMN_NUM);
 
-						if (p >= DRAGON_SOUL_INVENTORY_MAX_NUM)
-							continue;
+					if (p >= DRAGON_SOUL_INVENTORY_MAX_NUM)
+						continue;
 
-						if (m_pointsInstant.pDSItems[p] && m_pointsInstant.pDSItems[p] != pOld)
-							continue;
+					if (m_pointsInstant.pDSItems[p] && m_pointsInstant.pDSItems[p] != pOld)
+						continue;
 
-						m_pointsInstant.wDSItemGrid[p] = 0;
-					}
+					m_pointsInstant.wDSItemGrid[p] = 0;
 				}
-				else
-					m_pointsInstant.wDSItemGrid[wCell] = 0;
 			}
 
 			if (pItem)
 			{
-				if (wCell >= DRAGON_SOUL_INVENTORY_MAX_NUM)
+				for (int i = 0; i < pItem->GetSize(); ++i)
 				{
-					sys_err("CHARACTER::SetItem: invalid DS item cell %d", wCell);
-					return;
+					int p = wCell + (i * DRAGON_SOUL_BOX_COLUMN_NUM);
+
+					if (p >= DRAGON_SOUL_INVENTORY_MAX_NUM)
+						continue;
+
+					// wCell + 1 로 하는 것은 빈곳을 체크할 때 같은
+					// 아이템은 예외처리하기 위함
+					m_pointsInstant.wDSItemGrid[p] = wCell + 1;
 				}
-
-				if (wCell < DRAGON_SOUL_INVENTORY_MAX_NUM)
-				{
-					for (int i = 0; i < pItem->GetSize(); ++i)
-					{
-						int p = wCell + (i * DRAGON_SOUL_BOX_COLUMN_NUM);
-
-						if (p >= DRAGON_SOUL_INVENTORY_MAX_NUM)
-							continue;
-
-						// wCell + 1 로 하는 것은 빈곳을 체크할 때 같은
-						// 아이템은 예외처리하기 위함
-						m_pointsInstant.wDSItemGrid[p] = wCell + 1;
-					}
-				}
-				else
-					m_pointsInstant.wDSItemGrid[wCell] = wCell + 1;
 			}
 
 			m_pointsInstant.pDSItems[wCell] = pItem;
@@ -6345,7 +6336,7 @@ void CHARACTER::BuffOnAttr_ValueChange(BYTE bType, BYTE bOldValue, BYTE bNewValu
 	}
 	else if(0 == bOldValue)
 	{
-		CBuffOnAttributes* pBuff;
+		CBuffOnAttributes* pBuff = NULL;
 		if (m_map_buff_on_attrs.end() == it)
 		{
 			switch (bType)
@@ -6365,7 +6356,8 @@ void CHARACTER::BuffOnAttr_ValueChange(BYTE bType, BYTE bOldValue, BYTE bNewValu
 				}
 				break;
 			default:
-				break;
+				sys_err("CHARACTER::BuffOnAttr_ValueChange: no buff for point type %d", bType);
+				return;
 			}
 			m_map_buff_on_attrs.insert(TMapBuffOnAttrs::value_type(bType, pBuff));
 
