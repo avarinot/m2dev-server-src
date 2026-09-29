@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include <sstream>
+#include <sodium.h>
 #include "common/length.h"
 
 #include "db.h"
@@ -232,6 +233,36 @@ void DBManager::LoginPrepare(LPDESC d, int * paiPremiumTimes)
 	SendAuthLogin(d);
 }
 
+// The stored password is an Argon2id hash (libsodium string format, written by the accounts service), or a legacy
+// MySQL PASSWORD() value, which is replaced by an Argon2id hash on the first successful login (ADR-0008).
+// szLegacyOfPlain is PASSWORD(<typed password>) as computed by the login query.
+static bool CheckAccountPassword(const char * szPlain, const char * szLegacyOfPlain, const char * szStored, DWORD dwAccountID)
+{
+	if (!*szStored || sodium_init() < 0)
+		return false;
+
+	const size_t plainLength = strlen(szPlain);
+	if (!strncmp(szStored, crypto_pwhash_argon2id_STRPREFIX, strlen(crypto_pwhash_argon2id_STRPREFIX)))
+		return crypto_pwhash_str_verify(szStored, szPlain, plainLength) == 0;
+
+	if (strcmp(szLegacyOfPlain, szStored))
+		return false;
+
+	char szHash[crypto_pwhash_STRBYTES];
+	if (crypto_pwhash_str_alg(szHash, szPlain, plainLength, crypto_pwhash_OPSLIMIT_INTERACTIVE,
+			crypto_pwhash_MEMLIMIT_INTERACTIVE, crypto_pwhash_ALG_ARGON2ID13) == 0)
+	{
+		// Only if the stored value is still the legacy one: a password reset meanwhile must not be undone. Both
+		// values only hold [A-Za-z0-9+/$,=*]: nothing to escape.
+		DBManager::instance().Query("UPDATE account SET password='%s' WHERE id=%u AND password='%s'", szHash,
+			dwAccountID, szStored);
+		sys_log(0, "   password of account %u migrated to Argon2id", dwAccountID);
+	}
+	else
+		sys_err("Argon2id hashing failed for account %u (out of memory?): keeping the legacy hash", dwAccountID);
+	return true;
+}
+
 void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 {
 	CReturnQueryInfo * qi = (CReturnQueryInfo *) pMsg->pvUserData;
@@ -256,7 +287,6 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 				if (pMsg->Get()->uiNumRows == 0)
 				{
 					sys_log(0, "   NOID");
-					RecordLoginFailure(d->GetHostName());
 					LoginFailure(d, "NOID");
 					M2_DELETE(pinfo);
 				}
@@ -267,7 +297,7 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 
 					// PASSWORD('%s'), password, securitycode, social_id, id, status
 					char szEncrytPassword[45 + 1];
-					char szPassword[45 + 1];
+					char szPassword[crypto_pwhash_STRBYTES];
 					char szSocialID[SOCIAL_ID_MAX_LEN + 1];
 					char szStatus[ACCOUNT_STATUS_MAX_LEN + 1];
 					DWORD dwID = 0;
@@ -360,11 +390,8 @@ void DBManager::AnalyzeReturnQuery(SQLMsg * pMsg)
 						}
 					}
 
-					int nPasswordDiff = strcmp(szEncrytPassword, szPassword);
-
-					if (nPasswordDiff)
+					if (!CheckAccountPassword(pinfo->passwd, szEncrytPassword, szPassword, dwID))
 					{
-						RecordLoginFailure(d->GetHostName());
 						LoginFailure(d, "WRONGPWD");
 						sys_log(0, "   WRONGPWD");
 						M2_DELETE(pinfo);

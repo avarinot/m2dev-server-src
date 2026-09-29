@@ -17,7 +17,8 @@ enum
 };
 
 void LoginFailure(LPDESC d, const char * c_pszStatus);
-void RecordLoginFailure(const char* hostName);
+// Every login attempt counts against the per-host limit; a successful login clears it.
+void RecordLoginAttempt(const char* hostName);
 void ClearLoginFailure(const char* hostName);
 void BroadcastGuildMarkUpdate(DWORD dwGuildID, WORD wImgIdx);
 

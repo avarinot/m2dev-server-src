@@ -23,7 +23,7 @@ struct LoginAttemptInfo
 
 static std::unordered_map<std::string, LoginAttemptInfo> s_loginAttempts;
 
-void RecordLoginFailure(const char* hostName)
+void RecordLoginAttempt(const char* hostName)
 {
 	DWORD now = get_dword_time();
 	auto it = s_loginAttempts.find(hostName);
@@ -229,12 +229,19 @@ void CInputAuth::Login(LPDESC d, const char * c_pData)
 		return;
 	}
 
+	// Counted before the query, not when it fails: each checked password costs an Argon2 run (~100 ms, 64 MiB)
+	// on this single-threaded process, so pipelined requests must hit the limit before reaching the database.
+	RecordLoginAttempt(d->GetHostName());
+
 	DWORD dwKey = DESC_MANAGER::instance().CreateLoginKey(d);
 
 	sys_log(0, "InputAuth::Login : key %u login %s", dwKey, login);
 
 	TPacketCGLogin3 * p = M2_NEW TPacketCGLogin3;
 	thecore_memcpy(p, pinfo, sizeof(TPacketCGLogin3));
+	// The client may send unterminated strings; the password is later checked from this copy.
+	p->login[LOGIN_MAX_LEN] = '\0';
+	p->passwd[PASSWD_MAX_LEN] = '\0';
 
 	char szPasswd[PASSWD_MAX_LEN * 2 + 1];
 	DBManager::instance().EscapeString(szPasswd, sizeof(szPasswd), passwd, strlen(passwd));
