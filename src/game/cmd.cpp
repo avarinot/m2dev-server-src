@@ -18,6 +18,9 @@ ACMD(do_stun);
 ACMD(do_warp);
 ACMD(do_goto);
 ACMD(do_item);
+ACMD(do_give_item);
+ACMD(do_take_item);
+ACMD(do_show_inventory);
 ACMD(do_mob);
 ACMD(do_mob_ld);
 ACMD(do_mob_aggresive);
@@ -255,6 +258,9 @@ struct command_info cmd_info[] =
 	{ "geteventflag",	do_get_event_flag,	0,			POS_DEAD,	GM_LOW_WIZARD	},
 
 	{ "item",		do_item,		0,			POS_DEAD,	GM_GOD		},
+	{ "give",		do_give_item,	0,			POS_DEAD,	GM_GOD		},
+	{ "take",		do_take_item,	0,			POS_DEAD,	GM_GOD		},
+	{ "inv",		do_show_inventory,	0,		POS_DEAD,	GM_LOW_WIZARD	},
 
 	{ "mob",		do_mob,			0,			POS_DEAD,	GM_HIGH_WIZARD	},
 	{ "mob_ld",		do_mob_ld,			0,			POS_DEAD,	GM_HIGH_WIZARD	}, /* 몹의 위치와 방향을 설정해 소환 /mob_ld vnum x y dir */

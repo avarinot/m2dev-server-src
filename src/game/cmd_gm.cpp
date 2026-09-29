@@ -452,6 +452,50 @@ ACMD(do_warp)
 	ch->Stop();
 }
 
+// Resolves an item vnum given as a number or as an item name; reports to the GM when unknown.
+static bool ParseItemVnum(LPCHARACTER ch, const char * arg, DWORD & dwVnum)
+{
+	dwVnum = 0;
+	if (isnhdigit(*arg))
+		str_to_number(dwVnum, arg);
+	else if (!ITEM_MANAGER::instance().GetVnum(arg, dwVnum))
+	{
+		ch->ChatPacket(CHAT_TYPE_INFO, "Unknown item: %s", arg);
+		return false;
+	}
+	return true;
+}
+
+// Creates an item and puts it in the target's inventory (dragon soul inventory for dragon soul stones), reporting
+// to the GM. Shared by /item (target = the GM) and /give.
+static bool GiveGmItem(LPCHARACTER ch, LPCHARACTER target, DWORD dwVnum, int iCount)
+{
+	LPITEM item = ITEM_MANAGER::instance().CreateItem(dwVnum, iCount, 0, true);
+
+	if (!item)
+	{
+		ch->ChatPacket(CHAT_TYPE_INFO, "#%u item not exist by that vnum.", dwVnum);
+		return false;
+	}
+
+	const bool bDragonSoul = item->IsDragonSoul();
+	const int iEmptyPos = bDragonSoul ? target->GetEmptyDragonSoulInventory(item) : target->GetEmptyInventory(item->GetSize());
+
+	if (iEmptyPos == -1)
+	{
+		M2_DESTROY_ITEM(item);
+		if (bDragonSoul && !target->DragonSoul_IsQualified())
+			ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("인벤이 활성화 되지 않음."));
+		else
+			ch->ChatPacket(CHAT_TYPE_INFO, "Not enough inventory space.");
+		return false;
+	}
+
+	item->AddToCharacter(target, TItemPos(bDragonSoul ? DRAGON_SOUL_INVENTORY : INVENTORY, iEmptyPos));
+	LogManager::instance().ItemLog(target, item, "GM", ch == target ? item->GetName() : ch->GetName());
+	return true;
+}
+
 ACMD(do_item)
 {
 	char arg1[256], arg2[256];
@@ -472,62 +516,115 @@ ACMD(do_item)
 	}
 
 	DWORD dwVnum;
+	if (ParseItemVnum(ch, arg1, dwVnum))
+		GiveGmItem(ch, ch, dwVnum, iCount);
+}
 
-	if (isnhdigit(*arg1))
-		str_to_number(dwVnum, arg1);
+// The player a GM command acts on: online on this core. Otherwise, tells the GM where the player is.
+static LPCHARACTER FindTargetOnThisCore(LPCHARACTER ch, const char * szName)
+{
+	LPCHARACTER tch = CHARACTER_MANAGER::instance().FindPC(szName);
+	if (tch)
+		return tch;
+
+	if (const CCI * pkCCI = P2P_MANAGER::instance().Find(szName))
+		ch->ChatPacket(CHAT_TYPE_INFO, "%s est sur un autre core (canal %d, map %ld) : rejoins-le avec /warp %s.",
+			szName, pkCCI->bChannel, pkCCI->lMapIndex, szName);
 	else
+		ch->ChatPacket(CHAT_TYPE_INFO, "%s n'est pas connecté.", szName);
+	return NULL;
+}
+
+// /give <player> <item vnum or name> [count]
+ACMD(do_give_item)
+{
+	char arg1[256], arg2[256], arg3[256];
+	one_argument(two_arguments(argument, arg1, sizeof(arg1), arg2, sizeof(arg2)), arg3, sizeof(arg3));
+
+	if (!*arg1 || !*arg2)
 	{
-		if (!ITEM_MANAGER::instance().GetVnum(arg1, dwVnum))
-		{
-			ch->ChatPacket(CHAT_TYPE_INFO, "#%u item not exist by that vnum.", dwVnum);
-			return;
-		}
+		ch->ChatPacket(CHAT_TYPE_INFO, "Usage: /give <joueur> <vnum|nom> [quantité]");
+		return;
 	}
 
-	LPITEM item = ITEM_MANAGER::instance().CreateItem(dwVnum, iCount, 0, true);
+	LPCHARACTER tch = FindTargetOnThisCore(ch, arg1);
+	DWORD dwVnum;
+	if (!tch || !ParseItemVnum(ch, arg2, dwVnum))
+		return;
 
-	if (item)
+	int iCount = 1;
+	if (*arg3)
 	{
-		if (item->IsDragonSoul())
-		{
-			int iEmptyPos = ch->GetEmptyDragonSoulInventory(item);
-
-			if (iEmptyPos != -1)
-			{
-				item->AddToCharacter(ch, TItemPos(DRAGON_SOUL_INVENTORY, iEmptyPos));
-				LogManager::instance().ItemLog(ch, item, "GM", item->GetName());
-			}
-			else
-			{
-				M2_DESTROY_ITEM(item);
-				if (!ch->DragonSoul_IsQualified())
-				{
-					ch->ChatPacket(CHAT_TYPE_INFO, LC_TEXT("인벤이 활성화 되지 않음."));
-				}
-				else
-					ch->ChatPacket(CHAT_TYPE_INFO, "Not enough inventory space.");
-			}
-		}
-		else
-		{
-			int iEmptyPos = ch->GetEmptyInventory(item->GetSize());
-
-			if (iEmptyPos != -1)
-			{
-				item->AddToCharacter(ch, TItemPos(INVENTORY, iEmptyPos));
-				LogManager::instance().ItemLog(ch, item, "GM", item->GetName());
-			}
-			else
-			{
-				M2_DESTROY_ITEM(item);
-				ch->ChatPacket(CHAT_TYPE_INFO, "Not enough inventory space.");
-			}
-		}
+		str_to_number(iCount, arg3);
+		iCount = MINMAX(1, iCount, ITEM_MAX_COUNT);
 	}
-	else
+
+	if (GiveGmItem(ch, tch, dwVnum, iCount))
+		ch->ChatPacket(CHAT_TYPE_INFO, "Donné à %s : %d x #%u.", tch->GetName(), iCount, dwVnum);
+}
+
+// /take <player> <item vnum> [count]: removes from the inventory (not the equipment); all of them by default.
+ACMD(do_take_item)
+{
+	char arg1[256], arg2[256], arg3[256];
+	one_argument(two_arguments(argument, arg1, sizeof(arg1), arg2, sizeof(arg2)), arg3, sizeof(arg3));
+
+	if (!*arg1 || !*arg2)
 	{
-		ch->ChatPacket(CHAT_TYPE_INFO, "#%u item not exist by that vnum.", dwVnum);
+		ch->ChatPacket(CHAT_TYPE_INFO, "Usage: /take <joueur> <vnum> [quantité] (tous par défaut)");
+		return;
 	}
+
+	LPCHARACTER tch = FindTargetOnThisCore(ch, arg1);
+	DWORD dwVnum;
+	if (!tch || !ParseItemVnum(ch, arg2, dwVnum))
+		return;
+
+	const int iOwned = tch->CountSpecifyItem(dwVnum);
+	int iCount = iOwned;
+	if (*arg3)
+	{
+		str_to_number(iCount, arg3);
+		iCount = MINMAX(0, iCount, iOwned);
+	}
+
+	if (iCount <= 0)
+	{
+		ch->ChatPacket(CHAT_TYPE_INFO, "%s n'a pas d'objet #%u dans son inventaire.", tch->GetName(), dwVnum);
+		return;
+	}
+
+	tch->RemoveSpecifyItem(dwVnum, iCount);
+	LogManager::instance().ItemLog(tch, 0, dwVnum, "GM_TAKE", ch->GetName());
+	ch->ChatPacket(CHAT_TYPE_INFO, "Retiré à %s : %d x #%u (il en avait %d).", tch->GetName(), iCount, dwVnum, iOwned);
+}
+
+// /inv <player>: lists the inventory, to find what to /take.
+ACMD(do_show_inventory)
+{
+	char arg1[256];
+	one_argument(argument, arg1, sizeof(arg1));
+
+	if (!*arg1)
+	{
+		ch->ChatPacket(CHAT_TYPE_INFO, "Usage: /inv <joueur>");
+		return;
+	}
+
+	LPCHARACTER tch = FindTargetOnThisCore(ch, arg1);
+	if (!tch)
+		return;
+
+	int iShown = 0;
+	for (int i = 0; i < INVENTORY_MAX_NUM; ++i)
+	{
+		LPITEM item = tch->GetInventoryItem(i);
+		if (!item)
+			continue;
+		ch->ChatPacket(CHAT_TYPE_INFO, "[%d] #%u %s x%d", i, item->GetVnum(), item->GetName(), item->GetCount());
+		++iShown;
+	}
+	ch->ChatPacket(CHAT_TYPE_INFO, "Inventaire de %s : %d objet(s).", tch->GetName(), iShown);
 }
 
 ACMD(do_group_random)
