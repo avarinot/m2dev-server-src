@@ -680,8 +680,8 @@ bool ITEM_MANAGER::ReadMonsterDropItemGroup(const char * c_pszFileName)
 					}
 
 					float fPercent = atof(pTok->at(2).c_str());
-					// MR-10: Drop Item Group Fix for handling drop percent
-					DWORD dwPct = (DWORD)(10000.0f * fPercent * 100.0f);
+					// MR-10 (x100) removed: mob_drop_item.txt is written for 10000 * value out of 4,000,000 (4 = 1 %, 400 = 100 %)
+					DWORD dwPct = (DWORD)(10000.0f * fPercent);
 					// MR-10: -- END OF -- Drop Item Group Fix for handling drop percent
 
 					sys_log(0, "        name %s pct %d count %d", name.c_str(), dwPct, iCount);
@@ -732,8 +732,8 @@ bool ITEM_MANAGER::ReadMonsterDropItemGroup(const char * c_pszFileName)
 					}
 
 					float fPct = atof(pTok->at(2).c_str());
-					// MR-10: Drop Item Group Fix for handling drop percent
-					DWORD dwPct = (DWORD)(10000.0f * fPct * 100.0f);
+					// MR-10 (x100) removed: mob_drop_item.txt is written for 10000 * value out of 4,000,000 (4 = 1 %, 400 = 100 %)
+					DWORD dwPct = (DWORD)(10000.0f * fPct);
 					// MR-10: -- END OF -- Drop Item Group Fix for handling drop percent
 
 					pkLevelItemGroup->AddItem(dwItemVnum, dwPct, iCount);
@@ -785,8 +785,8 @@ bool ITEM_MANAGER::ReadMonsterDropItemGroup(const char * c_pszFileName)
 					}
 
 					float fPercent = atof(pTok->at(2).c_str());
-					// MR-10: Drop Item Group Fix for handling drop percent
-					DWORD dwPct = (DWORD)(10000.0f * fPercent * 100.0f);
+					// MR-10 (x100) removed: mob_drop_item.txt is written for 10000 * value out of 4,000,000 (4 = 1 %, 400 = 100 %)
+					DWORD dwPct = (DWORD)(10000.0f * fPercent);
 					// MR-10: -- END OF -- Drop Item Group Fix for handling drop percent
 
 					sys_log(0, "        name %s pct %d count %d", name.c_str(), dwPct, iCount);
