@@ -42,6 +42,7 @@
 #include "DragonSoul.h"
 #include "buff_on_attributes.h"
 #include "belt_inventory_helper.h"
+#include "librules/rules.h"
 
 const int ITEM_BROKEN_METIN_VNUM = 28960;
 
@@ -4671,7 +4672,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 										char buf[21];
 										snprintf(buf, sizeof(buf), "%u", item2->GetID());
 
-										if (number(1, 100) <= aiItemAttributeAddPercent[item2->GetAttributeCount()])
+										if (number(1, 100) <= rules::Current()->bonuses.AddSuccessPercent(item2->GetAttributeCount()))
 										{
 											item2->AddAttribute();
 											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("속성 추가에 성공하였습니다."));
@@ -4716,7 +4717,7 @@ bool CHARACTER::UseItemEx(LPITEM item, TItemPos DestCell)
 										char buf[21];
 										snprintf(buf, sizeof(buf), "%u", item2->GetID());
 
-										if (number(1, 100) <= aiItemAttributeAddPercent[item2->GetAttributeCount()])
+										if (number(1, 100) <= rules::Current()->bonuses.AddSuccessPercent(item2->GetAttributeCount()))
 										{
 											item2->AddAttribute();
 											ChatPacket(CHAT_TYPE_INFO, LC_TEXT("속성 추가에 성공하였습니다."));

@@ -54,6 +54,7 @@
 #include "DragonLair.h"
 #include "skill_power.h"
 #include "DragonSoul.h"
+#include "librules/rules.h"
 
 // #ifndef OS_WINDOWS
 // #include <gtest/gtest.h>
@@ -529,6 +530,19 @@ int start(int argc, char **argv)
 	{
 		fprintf(stderr, "Could not initialize thecore, check owner of pid, syslog\n");
 		exit(0);
+	}
+
+	// Tunable rules (data/rules in the mt2 repository, installed as conf/rules): refuse to start without them.
+	try
+	{
+		rules::Install(rules::Load("conf/rules"));
+		sys_log(0, "Game rules loaded from conf/rules");
+	}
+	catch (const rules::RulesError& error)
+	{
+		fprintf(stderr, "Game rules: %s\n", error.what());
+		sys_err("Game rules: %s", error.what());
+		return 0;
 	}
 
 	if (false == CThreeWayWar::instance().LoadSetting("forkedmapindex.txt"))

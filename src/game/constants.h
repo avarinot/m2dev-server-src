@@ -125,7 +125,6 @@ extern const int		aSkillAttackAffectProbByRank[MOB_RANK_MAX_NUM];
 extern const int aiItemMagicAttributePercentHigh[ITEM_ATTRIBUTE_MAX_LEVEL]; // 1°³±îÁö
 extern const int aiItemMagicAttributePercentLow[ITEM_ATTRIBUTE_MAX_LEVEL];
 
-extern const int aiItemAttributeAddPercent[ITEM_ATTRIBUTE_MAX_NUM];
 
 extern const int aiWeaponSocketQty[WEAPON_NUM_TYPES];
 extern const int aiArmorSocketQty[ARMOR_NUM_TYPES];

@@ -802,13 +802,6 @@ const int aiItemMagicAttributePercentLow[ITEM_ATTRIBUTE_MAX_LEVEL] =
 	50, 40, 10, 0, 0
 };
 
-// ADD_ITEM_ATTRIBUTE
-const int aiItemAttributeAddPercent[ITEM_ATTRIBUTE_MAX_NUM] =
-{
-	100, 80, 60, 50, 30, 0, 0, 
-};
-// END_OF_ADD_ITEM_ATTRIBUTE
-
 const int aiExpLossPercents[PLAYER_EXP_TABLE_MAX + 1] =
 {
 	0,

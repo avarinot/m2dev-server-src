@@ -11,6 +11,7 @@ target_link_libraries(game
 	libsql
 	libthecore
 	liblua
+	librules
 
 	# external
 	mariadbclient
